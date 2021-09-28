@@ -352,6 +352,7 @@
     <Compile Include="Cognitive_Services\GoogleProcessor.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ProcessVaccineCardController.cs" />
+    <Compile Include="Controllers\ServerSentEventsController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -420,6 +421,7 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Views\ProcessVaccineCard\" />
+    <Folder Include="Views\ServerSentEvents\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />
