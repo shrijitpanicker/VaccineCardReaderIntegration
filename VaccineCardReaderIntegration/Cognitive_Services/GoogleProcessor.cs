@@ -5,10 +5,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using VaccineCardReaderIntegration.Models;
@@ -21,7 +23,7 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
 
         private VaccineCardDetails googleScannedDetails = new VaccineCardDetails();
         private const string url = "https://automl.googleapis.com/v1/projects/176512682778/locations/us-central1/models/TEN8125010498241429504:predict";
-        public static async Task<ScannedVaccineCardResult> ExtractText(IFormFile imageFile, string[] services)
+        public static async Task<ScannedVaccineCardResult> ExtractText(string imageURL, string[] services)
         {
             ScannedVaccineCardResult scannedResult = new ScannedVaccineCardResult();
             try
@@ -29,8 +31,9 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
                 VaccineCardDetails cardDetails = new VaccineCardDetails();
                 if (Array.Exists(services, service => service.Equals(Constants.Services.Google, StringComparison.OrdinalIgnoreCase)))
                 {
-                    string firebaseStorageName = System.Environment.GetEnvironmentVariable("FirebaseStorageName", EnvironmentVariableTarget.Process);
-                    string fileURL = "gs://" + firebaseStorageName + "/images/" + imageFile.FileName + ".pdf";
+                    string firebaseStorageName = ConfigurationManager.AppSettings["firebasestoragename"];
+                    string imageName = Regex.Match(imageURL, @"[^//]+$").Value;
+                    string fileURL = "gs://" + firebaseStorageName + "/images/" + imageName + ".pdf";
                     string accessToken = await GetAccessToken();
                     string formattedAccessToken = string.Format("Bearer {0}", accessToken);
                     string data = @"{""payload"": {""document"": {""input_config"": {""gcs_source"": {""input_uris"": """ + fileURL + @"""}}}}}";
@@ -138,9 +141,9 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
 
         private static Task<string> GetAccessToken()
         {
-            string clientID = System.Environment.GetEnvironmentVariable("ClientID", EnvironmentVariableTarget.Process);
-            string clientSecret = System.Environment.GetEnvironmentVariable("ClientSecret", EnvironmentVariableTarget.Process);
-            string refreshToekn = System.Environment.GetEnvironmentVariable("RefreshToekn", EnvironmentVariableTarget.Process);
+            string clientID = ConfigurationManager.AppSettings["googleclientid"];
+            string clientSecret = ConfigurationManager.AppSettings["googleclientsecret"];
+            string refreshToekn = ConfigurationManager.AppSettings["refreshtoken"];
             string parameter = String.Format("client_id={0}&client_secret={1}&refresh_token={2}&grant_type=refresh_token", clientID, clientSecret, refreshToekn);
             byte[] buffer = Encoding.ASCII.GetBytes(parameter);
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://oauth2.googleapis.com/token");
@@ -161,30 +164,6 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
             string accessToken = googleAuthResponse.access_token;
 
             return Task.FromResult(accessToken);
-        }
-
-        public static async Task DeleteUploadedFiles(IFormFile imageFile)
-        {
-            // Authentication
-            string firebaseAPI = System.Environment.GetEnvironmentVariable("FirebaseAPI", EnvironmentVariableTarget.Process);
-            FirebaseAuthProvider auth = new FirebaseAuthProvider(new FirebaseConfig(firebaseAPI));
-            string userEmail = System.Environment.GetEnvironmentVariable("UserEmail", EnvironmentVariableTarget.Process);
-            string userPassword = System.Environment.GetEnvironmentVariable("UserPassword", EnvironmentVariableTarget.Process);
-            string firebaseStorageName = System.Environment.GetEnvironmentVariable("FirebaseStorageName", EnvironmentVariableTarget.Process);
-            FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(userEmail, userPassword);
-
-            // Construct FirebaseStorage with path to where you want to upload the file and put it there
-            Task PDFDelete = new FirebaseStorage(
-            firebaseStorageName,
-                new FirebaseStorageOptions
-                {
-                    AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                    ThrowOnCancel = true,
-                })
-            .Child("images")
-            .Child(imageFile.FileName + ".pdf")
-            .DeleteAsync();
-            await PDFDelete;
         }
     }
 }

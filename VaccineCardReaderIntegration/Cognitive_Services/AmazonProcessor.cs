@@ -15,7 +15,7 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
 {
     public class AmazonProcessor
     {
-        public static async Task<ScannedVaccineCardResult> ExtractText(string base64, ILogger log, string[] services)
+        public static async Task<ScannedVaccineCardResult> ExtractText(string base64, string[] services)
         {
             ScannedVaccineCardResult cardDetails = new ScannedVaccineCardResult();
             try
@@ -38,7 +38,6 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
                         string result = response.Content.ReadAsStringAsync().Result;
                         AmazonResult awsResult = JsonConvert.DeserializeObject<AmazonResult>(result);
                         cardDetails.awsResult = ProcessAwsResult(awsResult);
-                        log.LogInformation(DateTime.Now.ToString());
 
 
                         return await Task.FromResult(cardDetails);
