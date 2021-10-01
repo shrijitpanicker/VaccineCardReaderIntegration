@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using VaccineCardReaderIntegration.Helper;
 using VaccineCardReaderIntegration.Models;
 using VaccineCardReaderIntegration.Models.Google;
 
@@ -37,11 +38,7 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
                     string accessToken = await GetAccessToken();
                     string formattedAccessToken = string.Format("Bearer {0}", accessToken);
                     string data = @"{""payload"": {""document"": {""input_config"": {""gcs_source"": {""input_uris"": """ + fileURL + @"""}}}}}";
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                    request.Method = "POST";
-                    request.Headers.Add("Authorization", formattedAccessToken);
-                    request.ContentType = "application/json";
-                    request.ContentLength = data.Length;
+                    HttpWebRequest request = HTTPHelper.GetHttpWebRequestObject(url, "POST", data.Length, "application/json", "Authorization", formattedAccessToken);
                     using (Stream webStream = request.GetRequestStream())
                     using (StreamWriter requestWriter = new StreamWriter(webStream, System.Text.Encoding.ASCII))
                     {
@@ -146,15 +143,10 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
             string refreshToekn = ConfigurationManager.AppSettings["refreshtoken"];
             string parameter = String.Format("client_id={0}&client_secret={1}&refresh_token={2}&grant_type=refresh_token", clientID, clientSecret, refreshToekn);
             byte[] buffer = Encoding.ASCII.GetBytes(parameter);
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://oauth2.googleapis.com/token");
-            request.Method = "POST";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.ContentLength = buffer.Length;
-
+            HttpWebRequest request = HTTPHelper.GetHttpWebRequestObject("https://oauth2.googleapis.com/token", "POST", buffer.Length, "application/x-www-form-urlencoded");
             Stream stream = request.GetRequestStream();
             stream.Write(buffer, 0, buffer.Length);
             stream.Close();
-
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             Stream responseStream = response.GetResponseStream();
             StreamReader responseStreamReader = new StreamReader(responseStream);

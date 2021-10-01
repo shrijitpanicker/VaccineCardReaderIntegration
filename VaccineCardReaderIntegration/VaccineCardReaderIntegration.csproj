@@ -393,6 +393,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helper\HTTPHelper.cs" />
     <Compile Include="Models\Amazon\AmazonResult.cs" />
     <Compile Include="Models\Azure\AzureResult.cs" />
     <Compile Include="Models\Constants.cs" />

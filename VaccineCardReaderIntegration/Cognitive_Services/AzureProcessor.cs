@@ -9,6 +9,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using VaccineCardReaderIntegration.Helper;
 using VaccineCardReaderIntegration.Models;
 using VaccineCardReaderIntegration.Models.Azure;
 
@@ -26,11 +27,7 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
 
                     string url = GetOperationLocation(imageFile).ToString();
                     byte[] buffer = Encoding.ASCII.GetBytes("");
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                    request.Method = "GET";
-                    request.ContentType = "application/json";
-                    request.ContentLength = buffer.Length;
-                    request.Headers.Add("Ocp-Apim-Subscription-Key", "9d80cbfdd0f74852941c809e0b7a79f9");
+                    HttpWebRequest request = HTTPHelper.GetHttpWebRequestObject(url, "GET", buffer.Length, "application/json", "Ocp-Apim-Subscription-Key", "9d80cbfdd0f74852941c809e0b7a79f9");
                     Stream stream = request.GetRequestStream();
                     stream.Write(buffer, 0, buffer.Length);
                     stream.Close();
@@ -100,12 +97,7 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
             string url = "https://eastasia.api.cognitive.microsoft.com/formrecognizer/v2.1/custom/models/d50524b3-4399-421d-bd4e-1bb2f1345a53/analyze";
             string fileURL = "gs://able-plating-320708.appspot.com/images/" + imageFile.FileName;
             byte[] buffer = Encoding.ASCII.GetBytes("client_id=176512682778-4kep66pdip7uv1ch23tia5mmrbcp28h6.apps.googleusercontent.com&client_secret=zSt87bDOErFyJz1TDylPHmdT&refresh_token=1//04bOedcPuvk9eCgYIARAAGAQSNwF-L9Ir_gtSQViCAXQn8Ptsb6AKxvaX_Av5sKujsWJ432zOKXF917bx7mIXUN-AbmGfwyRSTyQ&grant_type=refresh_token");
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.Headers.Add("Ocp-Apim-Subscription-Key", "9d80cbfdd0f74852941c809e0b7a79f9");
-            request.Method = "POST";
-            request.ContentType = "application/json";
-            request.ContentLength = buffer.Length;
-
+            HttpWebRequest request = HTTPHelper.GetHttpWebRequestObject(url, "POST", buffer.Length, "application/json", "Ocp-Apim-Subscription-Key", "9d80cbfdd0f74852941c809e0b7a79f9");
             Stream stream = request.GetRequestStream();
             stream.Write(buffer, 0, buffer.Length);
             stream.Close();
