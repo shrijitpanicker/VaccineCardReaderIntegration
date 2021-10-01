@@ -18,17 +18,17 @@ namespace VaccineCardReaderIntegration.Controllers
     {
         public static ScannedVaccineCardResult scannedResult = new ScannedVaccineCardResult();
         public static long numberOfServicesCalled = 0;
-        private static IEnumerable<Task<T>> Interleaved<T>(IEnumerable<Task<T>> tasks)
+        private static IEnumerable<Task<T>> AsyncExecutor<T>(IEnumerable<Task<T>> tasks)
         {
-            var inputTasks = tasks.ToList();
-            var sources = (from _ in Enumerable.Range(0, inputTasks.Count)
+            List<Task<T>> inputTasks = tasks.ToList();
+            List<TaskCompletionSource<T>> sources = (from count in Enumerable.Range(0, inputTasks.Count)
                            select new TaskCompletionSource<T>()).ToList();
             int nextTaskIndex = -1;
-            foreach (var inputTask in inputTasks)
+            foreach (Task<T> inputTask in inputTasks)
             {
                 inputTask.ContinueWith(completed =>
                 {
-                    var source = sources[Interlocked.Increment(ref nextTaskIndex)];
+                    TaskCompletionSource<T> source = sources[Interlocked.Increment(ref nextTaskIndex)];
                     if (completed.IsFaulted)
                         source.TrySetException(completed.Exception.InnerExceptions);
                     else if (completed.IsCanceled)
@@ -64,12 +64,19 @@ namespace VaccineCardReaderIntegration.Controllers
                 response = new HttpResponseMessage(HttpStatusCode.Created);
                 response.RequestMessage = new HttpRequestMessage(HttpMethod.Post, message);
 
-                var tasks = new List<Task<ScannedVaccineCardResult>>();
+                List<Task<ScannedVaccineCardResult>> tasks = new List<Task<ScannedVaccineCardResult>>();
                 numberOfServicesCalled = services.Length;
                 try
                 {
-                    tasks.Add(Task.Run(() => GoogleProcessor.ExtractText(imageURL, services)));
-                    tasks.Add(Task.Run(() => GoogleProcessor.ExtractText(imageURL, services)));
+                    if (Array.Exists(services, service => service.Equals(Constants.Services.Google, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        tasks.Add(Task.Run(() => GoogleProcessor.ExtractText(imageURL, services)));
+                    }
+
+                    if (Array.Exists(services, service => service.Equals(Constants.Services.Google, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        tasks.Add(Task.Run(() => GoogleProcessor.ExtractText(imageURL, services)));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -77,7 +84,7 @@ namespace VaccineCardReaderIntegration.Controllers
                     Console.WriteLine(ex.Message);
                 }
 
-                foreach (var task in Interleaved(tasks))
+                foreach (Task<ScannedVaccineCardResult> task in AsyncExecutor(tasks))
                 {
 
                     task.Wait();

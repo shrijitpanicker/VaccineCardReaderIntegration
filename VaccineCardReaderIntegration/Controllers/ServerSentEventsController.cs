@@ -21,16 +21,16 @@ namespace VaccineCardReaderIntegration.Controllers
         [Route("api/VaccineCardResultSSE")]
         public HttpResponseMessage GetEvents(CancellationToken clientDisconnectToken)
         {
-            var response = Request.CreateResponse();
+            HttpResponseMessage response = Request.CreateResponse();
             ProcessVaccineCardController processVaccineCard = new ProcessVaccineCardController();
             ScannedVaccineCardResult scannedVaccineCardResult = ProcessVaccineCardController.scannedResult;
             long numberOfServicesCalled = ProcessVaccineCardController.numberOfServicesCalled;
-            var result = JsonConvert.SerializeObject(scannedVaccineCardResult);
+            string result = JsonConvert.SerializeObject(scannedVaccineCardResult);
             response.Content = new PushStreamContent(async (stream, httpContent, transportContext) =>
             {
-                using (var writer = new StreamWriter(stream))
+                using (StreamWriter writer = new StreamWriter(stream))
                 {
-                    using (var consumer = new BlockingCollection<string>())
+                    using (BlockingCollection<string> consumer = new BlockingCollection<string>())
                     {
                          
                         for (int i = 0; i < numberOfServicesCalled; i++)

@@ -59,7 +59,7 @@ namespace VaccineCardReaderIntegration.Cognitive_Services
         private static VaccineCardDetails ProcessResults(AzureResult azureResult)
         {
             VaccineCardDetails cardDetails = new VaccineCardDetails();
-            foreach (var value in azureResult.AnalyzeResult.DocumentResults)
+            foreach (DocumentResult value in azureResult.AnalyzeResult.DocumentResults)
             {
                 cardDetails.FirstName = value.Fields.FirstName.ToString();
                 cardDetails.LastName = value.Fields.LastName.ToString();
